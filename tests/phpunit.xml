@@ -1,0 +1,21 @@
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         syntaxCheck="true"
+         bootstrap="./bootstrap.php"
+        >
+    <testsuites>
+        <testsuite name="Rest Test Suit">
+            <directory
+                    prefix=""
+                    >
+                ./tests/
+            </directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
