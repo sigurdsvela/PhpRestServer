@@ -4,19 +4,51 @@ namespace rest;
 use std\io\File;
 use std\json\JSON;
 use std\URL;
+use std\util\Str;
 
 class Rest {
-
+	/**
+	 * @var Config
+	 */
+	private $config;
+	
+	public function __construct(Config $config) {
+		$this->config = $config;
+	}
+	
 	/**
 	 * Load the rest server.
 	 * This should be called on every page load.
 	 *
-	 * @param $config JSON|File|Array
-	 *
 	 * @return void
 	 */
-	public static function load($config) {
+	public function load() {
 		$url = URL::getCurrentUrl();
+		if (!Str::startsWithIgnoreCase($url->getPath(), $this->config->getBase())) return;
+		
+		$path = $url->getPath();
+		$path = substr($path, strlen($this->config->getBase())); //Remove base from $path
+		
+		$controller = $this->config->getController($path);
+		$request = new RestRequest();
+		$response = new RestResponse();
+		switch ($_SERVER['REQUEST_METHOD']) {
+			case "GET":
+				$controller->doGet($request, $response);
+				break;
+			case "POST":
+				$controller->doPost($request, $response);
+				break;
+			case "DELETE":
+				$controller->doDelete($request, $response);
+				break;
+			case "PATCH":
+				$controller->doPatch($request, $response);
+				break;
+		}
+		$response->doHeader();
+		$response->flush();
+		die();
 	}
 	
 }
