@@ -37,6 +37,11 @@ class RestResponse implements Flushable{
 	public function &json() {
 		return $this->json;
 	}
+	
+	public function doHeader() {
+		header("HTTP/1.1 " . $this->statusCode . " " . $this->statusMessage);
+		header("Content-Type: application/json; charset=utf-8");
+	}
 
 	/**
 	 * Print the json response.
@@ -46,7 +51,6 @@ class RestResponse implements Flushable{
 	 * @return void
 	 */
 	public function flush() {
-		header("HTTP/1.1 " . $this->statusCode . " " . $this->statusMessage);
 		$this->json->write(Writer::out());
 		flush();
 	}
