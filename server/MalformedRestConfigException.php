@@ -1,4 +1,4 @@
 <?php
-namespace rest;
+namespace rest\server;
 
 class MalformedRestConfigException extends \RuntimeException{}

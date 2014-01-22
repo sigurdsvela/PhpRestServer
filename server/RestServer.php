@@ -1,12 +1,12 @@
 <?php
-namespace rest;
+namespace rest\server;
 
 use std\io\File;
 use std\json\JSON;
 use std\URL;
 use std\util\Str;
 
-class Rest {
+class RestServer {
 	/**
 	 * @var Config
 	 */

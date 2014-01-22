@@ -5,7 +5,7 @@
  * Time: 20:12
  */
 
-namespace rest;
+namespace rest\server;
 
 
 class RestRequest {

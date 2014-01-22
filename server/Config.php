@@ -1,5 +1,5 @@
 <?php
-namespace rest;
+namespace rest\server;
 
 use std\json\JSON;
 use std\util\Str;
