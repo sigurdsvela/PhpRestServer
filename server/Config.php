@@ -35,14 +35,16 @@ class Config {
 			}
 			foreach ($config["controllers"] as  $name => $class) {
 				try {
+					if (@!(new $class()) instanceof Controller) {
+						throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not extend Controller.");
+					}
+				} catch (\Exception $e) {}
+				try {
 					if (!class_exists($class)) {
 						throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not exist.");
 					}
 				} catch (\Exception $e) {
 					throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not exist.");
-				}
-				if (!(new $class()) instanceof Controller) {
-					throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not extend Controller.");
 				}
 			}
 			foreach ($config["urlMapping"] as  $regex => $controller) {
