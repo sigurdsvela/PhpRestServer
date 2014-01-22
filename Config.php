@@ -88,4 +88,12 @@ class Config {
 		return null;
 	}
 	
-} 
+	public function get404Controller() {
+		if (isset($this->config["404"])) {
+			$controller = $this->config["404"]();
+			return new $controller();
+		} else {
+			return new Controller404();
+		}
+	}
+}

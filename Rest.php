@@ -30,6 +30,10 @@ class Rest {
 		$path = substr($path, strlen($this->config->getBase())); //Remove base from $path
 		
 		$controller = $this->config->getController($path);
+		if ($controller === null) {
+			$controller = $this->config->get404Controller();
+		}
+		
 		$request = new RestRequest();
 		$response = new RestResponse();
 		switch ($_SERVER['REQUEST_METHOD']) {
