@@ -82,7 +82,7 @@ class Config {
 				 * @var $c Controller
 				 */
 				$c = new $controller();
-				$c->
+				return $c;
 			}
 		}
 		return null;
