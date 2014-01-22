@@ -2,6 +2,7 @@
 namespace rest;
 
 use std\json\JSON;
+use std\util\Str;
 
 class Config {
 	/**
@@ -13,9 +14,11 @@ class Config {
 	 * @var
 	 */
 	private $version;
-	
+
 	/**
 	 * @param JSON $config
+	 *
+	 * @throws MalformedRestConfigException
 	 */
 	public function __construct(JSON $config) {
 		$this->config = $config;
@@ -24,6 +27,33 @@ class Config {
 		$this->initValue("host", null);
 		$this->initValue("controllers", array());
 		$this->initValue("urlMapping", array());
+		$this->initValue("debug", false);
+		if ($this->config["debug"] === true) {
+			$config = $this->config;
+			if (!Str::startsWith($config["base"], "/") || !Str::endsWith($config["base"], "/")) {
+				throw new MalformedRestConfigException("The base key should start with and end with a slash(/). Example: /this/is/a/base/");
+			}
+			foreach ($config["controllers"] as  $name => $class) {
+				try {
+					if (!class_exists($class)) {
+						throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not exist.");
+					}
+				} catch (\Exception $e) {
+					throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not exist.");
+				}
+				if (!(new $class()) instanceof Controller) {
+					throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not extend Controller.");
+				}
+			}
+			foreach ($config["urlMapping"] as  $regex => $controller) {
+				if (@preg_match("/^" . $regex . "/", "") === false) {
+					throw new MalformedRestConfigException("UrlMapping: The regex($regex) specified for controller \"$controller\" is invalid. Remember, it should NOT start and end with the start and ending delimiter of php regexs.");
+				}
+				if (!isset($config["controllers"][$controller])) {
+					throw new MalformedRestConfigException("UrlMapping: The controller($controller) for mapping \"$regex\" was never specified the \"controllers\" section.");
+				}
+			}
+		}
 	}
 
 	/**
