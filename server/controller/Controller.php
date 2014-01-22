@@ -5,7 +5,11 @@
  * Time: 19:55
  */
 
-namespace rest\server;
+namespace rest\server\controller;
+
+use rest\server\RestResponse;
+use rest\server\RestRequest;
+
 class Controller {
 	
 	public function doGet(RestRequest $request, RestResponse $response) {

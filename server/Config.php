@@ -1,6 +1,7 @@
 <?php
 namespace rest\server;
 
+use rest\server\controller\Controller;
 use std\json\JSON;
 use std\util\Str;
 
