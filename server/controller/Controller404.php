@@ -1,5 +1,8 @@
 <?php
-namespace rest\server;
+namespace rest\server\controller;
+
+use rest\server\RestRequest;
+use rest\server\RestResponse;
 
 class Controller404 extends Controller{
 	public function doGet(RestRequest $request, RestResponse $response) {
