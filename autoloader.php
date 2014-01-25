@@ -1,3 +1,3 @@
 <?php
-$autoloader = new std\ClassLoader("rest", realpath(__DIR__ . "/../"));
+$autoloader = new std\lang\ClassLoader("rest", realpath(__DIR__ . "/../"));
 $autoloader->register();
