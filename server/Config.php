@@ -31,6 +31,8 @@ class Config {
 		$this->initValue("controllers", array());
 		$this->initValue("urlMapping", array());
 		$this->initValue("debug", false);
+		$this->initValue("cache", false);
+		$this->initValue("cacheLocation", "");
 		
 		if ($this->config["debug"] === true) {
 			$config = $this->config;
@@ -110,4 +112,9 @@ class Config {
 			return new Controller404();
 		}
 	}
+	
+	public function cache() {
+		return $this->config["cache"];
+	}
+	
 }

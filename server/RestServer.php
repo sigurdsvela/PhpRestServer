@@ -39,6 +39,9 @@ class RestServer {
 	 */
 	public function load() {
 		$url = URL::getCurrentUrl();
+		$cache = new Cache();
+		$params = array(); //TODO
+		
 		if (!Str::startsWithIgnoreCase($url->getPath(), $this->config->getBase())) return;
 		
 		$path = $url->getPath();
@@ -49,11 +52,20 @@ class RestServer {
 			$controller = $this->config->get404Controller();
 		}
 		
+		
 		$request = new RestRequest($this->patternMatches);
 		$response = new RestResponse();
+		
 		switch ($_SERVER['REQUEST_METHOD']) {
 			case "GET":
-				$controller->doGet($request, $response);
+				if ($this->config->cache() && $cache->hasCacheFor($path, $params)) {
+					$response->setJson($cache->getCache($path, $params)->toArray());
+				} else {
+					$controller->doGet($request, $response);
+					if ($this->config->cache()) {
+						$cache->setCache($path, $params, $response->json());
+					}
+				}
 				break;
 			case "POST":
 				$controller->doPost($request, $response);

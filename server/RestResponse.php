@@ -4,6 +4,7 @@ namespace rest\server;
 
 
 use std\io\Flushable;
+use std\io\Writable;
 use std\io\Writer;
 use std\json\JSON;
 
@@ -52,6 +53,17 @@ class RestResponse implements Flushable{
 	public function doHeader() {
 		header("HTTP/1.1 " . $this->statusCode . " " . $this->statusMessage);
 		header("Content-Type: application/json; charset=utf-8");
+	}
+
+	/**
+	 * Write the JSON response body to a Writable of your choice
+	 *
+	 * @param \std\io\Writable $writable
+	 *
+	 * @return void
+	 */
+	public function write(Writable $writable) {
+		$this->json->write($writable);	
 	}
 
 	/**
