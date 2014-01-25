@@ -21,21 +21,32 @@ class RestResponse implements Flushable{
 	}
 	
 	public function setStatusCode($code) {
-		$this->statusCode;
+		$this->statusCode = $code;
 	}
 	
 	public function setStatusMessage($msg) {
-		$this->statusMessage;
+		$this->statusMessage = $msg;
 	}
 	
 	/**
 	 * Returns a pointer to the JSON object that will be returned in the response.
 	 * Return the JSON reponse for manipulation
-	 *
+	 * 
 	 * @return \std\json\JSON
 	 */
 	public function &json() {
 		return $this->json;
+	}
+
+	/**
+	 * Set the json response.
+	 *
+	 * @param array $json
+	 *
+	 * @return void
+	 */
+	public function setJson(array $json) {
+		$this->json = new JSON($json);
 	}
 	
 	public function doHeader() {

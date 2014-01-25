@@ -2,7 +2,9 @@
 namespace rest\server;
 
 use rest\server\controller\Controller;
+use rest\server\controller\Controller404;
 use std\json\JSON;
+use std\URL;
 use std\util\Str;
 
 class Config {
@@ -15,7 +17,7 @@ class Config {
 	 * @var
 	 */
 	private $version;
-
+	
 	/**
 	 * @param JSON $config
 	 *
@@ -29,6 +31,7 @@ class Config {
 		$this->initValue("controllers", array());
 		$this->initValue("urlMapping", array());
 		$this->initValue("debug", false);
+		
 		if ($this->config["debug"] === true) {
 			$config = $this->config;
 			if (!Str::startsWith($config["base"], "/") || !Str::endsWith($config["base"], "/")) {
@@ -97,28 +100,6 @@ class Config {
 	
 	public function getUrlMapping() {
 		return $this->config['urlMapping'];
-	}
-
-	/**
-	 * Get a controller for a specified URL, or null if none is spesified.
-	 *
-	 * @param $url
-	 *
-	 * @return Controller
-	 */
-	public function getController($url) {
-		foreach($this->getUrlMapping() as $map => $controller) {
-			$matches = array();
-			if (preg_match("/^" . $map . "/", $url, $matches)) {
-				$controller = $this->getControllers()[$controller];
-				/**
-				 * @var $c Controller
-				 */
-				$c = new $controller();
-				return $c;
-			}
-		}
-		return null;
 	}
 	
 	public function get404Controller() {
