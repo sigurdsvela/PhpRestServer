@@ -13,24 +13,17 @@ use rest\server\RestRequest;
 class Controller {
 	
 	public function doGet(RestRequest $request, RestResponse $response) {
-		$response->setStatusCode(405);
-		$response->setStatusMessage("Verb not allowed");
-		$response->json()["message"] = "This verb is not allowed here.";
+		$response->header()->setStatus(405);
+		$response->data()["message"] = $response->header()->getStatusMessage();
 	}
 	public function doPost(RestRequest $request, RestResponse $response) {
-		$response->setStatusCode(405);
-		$response->setStatusMessage("Verb not allowed");
-		$response->json()["message"] = "This verb is not allowed here.";
+		$this->doGet($request, $response);
 	}
 	public function doDelete(RestRequest $request, RestResponse $response) {
-		$response->setStatusCode(405);
-		$response->setStatusMessage("Verb not allowed");
-		$response->json()["message"] = "This verb is not allowed here.";
+		$this->doGet($request, $response);
 	}
 	public function doPatch(RestRequest $request, RestResponse $response) {
-		$response->setStatusCode(405);
-		$response->setStatusMessage("Verb not allowed");
-		$response->json()["message"] = "This verb is not allowed here.";
+		$this->doGet($request, $response);
 	}
 	
 } 

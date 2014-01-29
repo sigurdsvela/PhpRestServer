@@ -19,46 +19,26 @@ class Config {
 	private $version;
 	
 	/**
-	 * @param JSON $config
+	 * @param JSON $pconfig
 	 *
 	 * @throws MalformedRestConfigException
 	 */
-	public function __construct(JSON $config) {
-		$this->config = $config;
+	public function __construct(JSON $pconfig) {
+		$this->config = $pconfig->toArray();
+
 		$this->initValue("version", "1.0");
 		$this->initValue("base", "/");
 		$this->initValue("host", null);
-		$this->initValue("controllers", array());
 		$this->initValue("urlMapping", array());
 		$this->initValue("debug", false);
-		
-		if ($this->config["debug"] === true) {
-			$config = $this->config;
-			if (!Str::startsWith($config["base"], "/") || !Str::endsWith($config["base"], "/")) {
-				throw new MalformedRestConfigException("The base key should start with and end with a slash(/). Example: /this/is/a/base/");
-			}
-			foreach ($config["controllers"] as  $name => $class) {
-				try {
-					if (@!(new $class()) instanceof Controller) {
-						throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not extend Controller.");
-					}
-				} catch (\Exception $e) {}
-				try {
-					if (!class_exists($class)) {
-						throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not exist.");
-					}
-				} catch (\Exception $e) {
-					throw new MalformedRestConfigException("The class($class) specified for the \"$name\" controller does not exist.");
-				}
-			}
-			foreach ($config["urlMapping"] as  $regex => $controller) {
-				if (@preg_match("/^" . $regex . "/", "") === false) {
-					throw new MalformedRestConfigException("UrlMapping: The regex($regex) specified for controller \"$controller\" is invalid. Remember, it should NOT start and end with the start and ending delimiter of php regexs.");
-				}
-				if (!isset($config["controllers"][$controller])) {
-					throw new MalformedRestConfigException("UrlMapping: The controller($controller) for mapping \"$regex\" was never specified the \"controllers\" section.");
-				}
-			}
+		$this->config["controllers"] = array();
+
+		foreach ($pconfig["controllers"] as $key => $controller) {
+			$this->config["controllers"][$key] = new ConfigController($controller);
+		}
+
+		if ($this->config["debug"] === true) { //We should use json schemas
+			
 		}
 	}
 
@@ -93,21 +73,55 @@ class Config {
 	public function getHost() {
 		return $this->config["host"];
 	}
-	
-	public function getControllers() {
-		return $this->config['controllers'];
-	}
-	
+
+	/**
+	 * Get all url mappings
+	 *
+	 * @return mixed
+	 */
 	public function getUrlMapping() {
 		return $this->config['urlMapping'];
 	}
+
+	/**
+	 * Get all controllers.
+	 *
+	 * @return ConfigController[]
+	 */
+	public function getControllers() {
+		return $this->config['controllers'];
+	}
+
+	/**
+	 * Get a controller for a specified URL, or null if none is specified.
+	 *
+	 * @param $url
+	 *
+	 * @return ConfigController
+	 */
+	public function getController($url) {
+		foreach($this->getUrlMapping() as $map => $controller) {
+			if (preg_match("/^" . $map . "/", $url)) {
+				$controller = $this->getControllers()[$controller];
+				return $controller;
+			}
+		}
+		return null;
+	}
 	
+	/**
+	 * Get the controller that handles 404's
+	 * 
+	 * @return ConfigController
+	 */
 	public function get404Controller() {
 		if (isset($this->config["404"])) {
 			$controller = $this->config["404"]();
-			return new $controller();
+			return $this->getControllers()[$controller]["class"];
 		} else {
-			return new Controller404();
+			return new ConfigController(array(
+				"class" => "rest\\server\\controller\\Controller404"
+			));
 		}
 	}
 }

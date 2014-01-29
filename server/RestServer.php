@@ -2,6 +2,10 @@
 namespace rest\server;
 
 use rest\server\controller\Controller;
+use rest\server\controller\MethodNotImplementedController;
+use rest\server\controller\MissingParametersController;
+use rest\server\responseStatus\OkStatus;
+use std\http\HttpRequest;
 use std\io\File;
 use std\json\JSON;
 use std\URL;
@@ -12,12 +16,15 @@ class RestServer {
 	 * @var Config
 	 */
 	private $config;
-	
+
+	/**
+	 * @var string The url without the hostname, and without the API base.
+	 */
 	private $apiUrl;
 	
 	private $matchedPattern;
 	
-	private $patternMatches;
+	private $urlCaptures = array();
 	
 	public function __construct(Config $config) {
 		$this->config = $config;
@@ -26,7 +33,7 @@ class RestServer {
 			$matches = array();
 			if (preg_match_all("/^" . $map . "/", $this->apiUrl, $matches) > 0) {
 				$this->matchedPattern = $map;
-				$this->patternMatches = $matches;
+				$this->urlCaptures = $matches;
 			}
 		}
 	}
@@ -35,23 +42,46 @@ class RestServer {
 	 * Load the rest server.
 	 * This should be called on every page load.
 	 *
-	 * @return void
+	 * @return RestResponse|null
 	 */
 	public function load() {
-		$url = URL::getCurrentUrl();
-		if (!Str::startsWithIgnoreCase($url->getPath(), $this->config->getBase())) return;
+		if (!Str::startsWithIgnoreCase(URL::getCurrentUrl()->getPath(), $this->config->getBase())) return null;
 		
-		$path = $url->getPath();
-		$path = substr($path, strlen($this->config->getBase())); //Remove base from $path
-		
-		$controller = $this->getController($path);
-		if ($controller === null) {
-			$controller = $this->config->get404Controller();
+		$configController = $this->config->getController($this->apiUrl);
+		if ($configController === null) { //If no controller, get 404 controller
+			$configController = $this->config->get404Controller();
+		}
+
+		//Extract the captures
+		$captures = array();
+		for ($i = 1; $i < count($this->urlCaptures); $i++) {
+			$captures[$configController->getUrlCaptures()[$i-1]] = $this->urlCaptures[$i][0];
 		}
 		
-		$request = new RestRequest($this->patternMatches);
+		//Check if any parameters are missing
+		$className = $configController->getClass();
+		/** @var Controller $controller */
+		$controller = new $className();
+		
+		$missing = array();
+		foreach ($configController->getRequiredParameters() as $parameter) {
+			if (HttpRequest::parameter($parameter["name"]) === null) {
+				$missing[] = $parameter;
+			}
+		}
+
+		//If we are missing parameters, set the controller to the one that handles that shit
+		if (!empty($missing)) {
+			$controller = new MissingParametersController($missing);
+		}
+	
+		$method = strtoupper($_SERVER['REQUEST_METHOD']);
+		$request = new RestRequest($captures);
 		$response = new RestResponse();
-		switch ($_SERVER['REQUEST_METHOD']) {
+		$response->header()->setStatus(200); //Default status
+		$response->setStatus(new OkStatus()); //Default Status
+		
+		switch ($method) {
 			case "GET":
 				$controller->doGet($request, $response);
 				break;
@@ -64,32 +94,13 @@ class RestServer {
 			case "PATCH":
 				$controller->doPatch($request, $response);
 				break;
+			default:
+				$controller = new MethodNotImplementedController();
+				$controller->doGet($request, $response);
 		}
-		$response->doHeader();
-		$response->flush();
-		die();
-	}
-
-	/**
-	 * Get a controller for a specified URL, or null if none is spesified.
-	 *
-	 * @param $url
-	 *
-	 * @return Controller
-	 */
-	public function getController($url) {
-		foreach($this->config->getUrlMapping() as $map => $controller) {
-			$matches = array();
-			if (preg_match("/^" . $map . "/", $url, $matches)) {
-				$controller = $this->config->getControllers()[$controller];
-				/**
-				 * @var $c Controller
-				 */
-				$c = new $controller();
-				return $c;
-			}
-		}
-		return null;
+		
+		$response->header()->setContentType("application/json"); //Always json :)
+		return $response;
 	}
 	
 }

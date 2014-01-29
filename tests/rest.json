@@ -1,0 +1,14 @@
+{
+	"version" : "1.0",
+	"debug" : true,
+	"base" : "/api/",
+	"cache" : true,
+	"controllers" : {
+		"NothingAllowed" : "rest\\tests\\controller\\NothingAllowed",
+		"HelloWorld" : "rest\\tests\\controller\\HelloWorld"
+	},
+	"urlMapping" : {
+		"notallowed" : "NothingAllowed",
+		"helloworld" : "HelloWorld"
+	}
+}

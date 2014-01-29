@@ -7,30 +7,26 @@
 
 namespace rest\server;
 
+use std\http\HttpRequest;
 use std\URL;
 
-class RestRequest {
-	private $requestedURL;
-	private $parameters;
-	private $method;
-	private $cookies;
-	private $urlMatches;
+/**
+ * Reperesent the request that is being made.
+ * 
+ * Class RestRequest
+ * @package rest\server
+ */
+class RestRequest extends HttpRequest{
+	private $urlCaptures;
 
 	/**
 	 * Get the url matches
-	 * @param array $urlMatches
-	 */
-	public function __construct(array $urlMatches) {
-		$this->urlMatches = $urlMatches;
-	}
-	
-	/**
-	 * Returns the requested url;
 	 *
-	 * @return URL a url object is returned. Check out the documentation, it has a bunch of awesome functions.
+	 * @param array $urlCaptures
 	 */
-	public function getRequestedURL() {
-		return $this->requestedURL;
+	public function __construct(array $urlCaptures) {
+		parent::__construct(true);
+		$this->urlCaptures = $urlCaptures;
 	}
 
 	/**
@@ -38,21 +34,8 @@ class RestRequest {
 	 *
 	 * @return array
 	 */
-	public function getUrlMatches() {
-		return $this->urlMatches;
-	}
-
-	/**
-	 * Return the query string, as a key=>value 
-	 *
-	 * @return void
-	 */
-	public function getQueryString() {
-		
-	}
-	
-	public function getParameters() {
-		
+	public function getUrlCaptures() {
+		return $this->urlCaptures;
 	}
 	
 } 
