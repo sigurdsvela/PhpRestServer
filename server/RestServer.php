@@ -1,105 +1,80 @@
 <?php
 namespace rest\server;
 
-use rest\server\controller\Controller;
-use rest\server\controller\MethodNotImplementedController;
-use rest\server\controller\MissingParametersController;
 use rest\server\responseStatus\OkStatus;
-use std\http\HttpRequest;
-use std\io\File;
-use std\json\JSON;
+use std\http\HttpConfig;
+use std\http\HttpController;
+use std\http\HttpServer;
 use std\URL;
 use std\util\Str;
 
-class RestServer {
-	/**
-	 * @var Config
-	 */
-	private $config;
-
-	/**
-	 * @var string The url without the hostname, and without the API base.
-	 */
-	private $apiUrl;
+class RestServer extends HttpServer{
 	
-	private $matchedPattern;
-	
-	private $urlCaptures = array();
-	
-	public function __construct(Config $config) {
-		$this->config = $config;
-		$this->apiUrl = substr(URL::getCurrentUrl()->getPath(), strlen($config->getBase()));
-		foreach ($this->config->getUrlMapping() as $map => $url) {
-			$matches = array();
-			if (preg_match_all("/^" . $map . "/", $this->apiUrl, $matches) > 0) {
-				$this->matchedPattern = $map;
-				$this->urlCaptures = $matches;
-			}
-		}
+	public function __construct(HttpConfig $config) {
+		parent::__construct($config);
 	}
 	
 	/**
 	 * Load the rest server.
 	 * This should be called on every page load.
 	 *
-	 * @return RestResponse|null
+	 * @return RestResponse
 	 */
-	public function load() {
-		if (!Str::startsWithIgnoreCase(URL::getCurrentUrl()->getPath(), $this->config->getBase())) return null;
-		
-		$configController = $this->config->getController($this->apiUrl);
-		if ($configController === null) { //If no controller, get 404 controller
-			$configController = $this->config->get404Controller();
+	public function run() {
+		$url = URL::getCurrentUrl();
+
+		if (!$this->isServerURL($url)) {
+			return null;
 		}
 
-		//Extract the captures
+		$path = Str::subString($url->getPath(), Str::length($this->config->getBase())); //Remove the base from the
+
+		/** @var HttpController $controller */
+		$controller = null;
+		$configController = null;
+
+		$rawCaptures = array();
+		foreach ($this->config->getMappings() as $match => $controllerName) {
+			if (preg_match_all("/^" . $match . "\\/$/", $path, $rawCaptures) > 0) {
+				$configController = $this->config->getController($controllerName);
+				$c = $configController->getClass();
+				$controller = new $c();
+				break;
+			}
+		}
+		array_shift($rawCaptures); //Remove the first, as this is just the entire string.
+
+		/*
+		 * Create an associative array with the names specified in the config json file 
+		 */
 		$captures = array();
-		for ($i = 1; $i < count($this->urlCaptures); $i++) {
-			$captures[$configController->getUrlCaptures()[$i-1]] = $this->urlCaptures[$i][0];
+		$rawCapturesLength = count($rawCaptures);
+		for ($i = 0; $i < $rawCapturesLength; $i++) {
+			$c = $rawCaptures[$i];
+			$captures[$configController->getCaptures()[$i]] = $c[0];
 		}
 		
-		//Check if any parameters are missing
-		$className = $configController->getClass();
-		/** @var Controller $controller */
-		$controller = new $className();
 		
-		$missing = array();
-		foreach ($configController->getRequiredParameters() as $parameter) {
-			if (HttpRequest::parameter($parameter["name"]) === null) {
-				$missing[] = $parameter;
+		if ($controller === null) {
+			$controller = $this->config->get404Controller();
+			if ($controller === null) {
+				echo "404";
+				die();
 			}
 		}
 
-		//If we are missing parameters, set the controller to the one that handles that shit
-		if (!empty($missing)) {
-			$controller = new MissingParametersController($missing);
-		}
-	
-		$method = strtoupper($_SERVER['REQUEST_METHOD']);
-		$request = new RestRequest($captures);
-		$response = new RestResponse();
-		$response->header()->setStatus(200); //Default status
-		$response->setStatus(new OkStatus()); //Default Status
+		$request = new RestRequest();
+		$response= new RestResponse(true);
 		
-		switch ($method) {
-			case "GET":
-				$controller->doGet($request, $response);
-				break;
-			case "POST":
-				$controller->doPost($request, $response);
-				break;
-			case "DELETE":
-				$controller->doDelete($request, $response);
-				break;
-			case "PATCH":
-				$controller->doPatch($request, $response);
-				break;
-			default:
-				$controller = new MethodNotImplementedController();
-				$controller->doGet($request, $response);
-		}
+		$request->setParameter("@captures", $captures);
+
+		$response->header()->setStatus(200);
+		$response->setStatus(new OkStatus());
 		
+		$controller->doCurrent($request, $response);
+
 		$response->header()->setContentType("application/json"); //Always json :)
+		
 		return $response;
 	}
 	

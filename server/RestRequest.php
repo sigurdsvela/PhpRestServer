@@ -17,16 +17,8 @@ use std\URL;
  * @package rest\server
  */
 class RestRequest extends HttpRequest{
-	private $urlCaptures;
-
-	/**
-	 * Get the url matches
-	 *
-	 * @param array $urlCaptures
-	 */
-	public function __construct(array $urlCaptures) {
+	public function __construct() {
 		parent::__construct(true);
-		$this->urlCaptures = $urlCaptures;
 	}
 
 	/**
@@ -35,7 +27,7 @@ class RestRequest extends HttpRequest{
 	 * @return array
 	 */
 	public function getUrlCaptures() {
-		return $this->urlCaptures;
+		return $this->getParameter("@captures");
 	}
 	
 } 

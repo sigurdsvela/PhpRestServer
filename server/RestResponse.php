@@ -3,10 +3,10 @@ namespace rest\server;
 
 
 
+use Exception;
 use rest\server\responseStatus\ResponseStatus;
 use std\http\HttpResponse;
 use std\http\HttpResponseHeader;
-use std\io\Flushable;
 use std\io\Writer;
 use std\json\JSON;
 
@@ -24,7 +24,7 @@ class RestResponse extends HttpResponse {
 	}
 
 	/**
-	 * Get the header for this responce
+	 * Get the header for this response response
 	 *
 	 * @return HttpResponseHeader
 	 */
@@ -74,6 +74,10 @@ class RestResponse extends HttpResponse {
 		$this->responseHeader->applyHeaders();
 		echo $o;
 		die();
+	}
+	
+	public function &response() {
+		throw new Exception("You may not call response in Rest responses");
 	}
 
 }
