@@ -1,7 +1,6 @@
 <?php
 namespace rest\tests;
 
-use rest\server\Config;
 use rest\server\RestResponse;
 use rest\server\RestServer;
 use std\http\HttpRequestHeader;
